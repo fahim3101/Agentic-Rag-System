@@ -1,6 +1,6 @@
 # Enterprise IT Support Agentic RAG Copilot
 
-An end-to-end **Forward Deployed Engineer (FDE) project** that turns a notebook-style Agentic RAG workflow into a deployable internal product using **LangGraph, FastAPI, Pinecone, Groq, Tavily, HTML, CSS, and JavaScript**.
+An end-to-end **Forward Deployed Engineer (FDE) project** that turns a notebook-style Agentic RAG workflow into a deployable internal product using **LangGraph, FastAPI, FAISS, Gemini (free tier), DuckDuckGo, HTML, CSS, and JavaScript** — 100% free, no paid API.
 
 ---
 
@@ -104,14 +104,14 @@ This repository demonstrates each layer.
                │                             │
                ▼                             ▼
        ┌───────────────┐              ┌──────────────┐
-       │ Private KB    │              │ Tavily Web   │
-       │ Pinecone      │              │ Search       │
+       │ Private KB    │              │ DuckDuckGo   │
+       │ FAISS local   │              │ Search       │
        └───────┬───────┘              └──────┬───────┘
                │                             │
                └──────────────┬──────────────┘
                               ▼
                      ┌────────────────┐
-                     │ Groq LLM       │
+                     │ Gemini LLM       │
                      │ Grounded Answer│
                      └────────────────┘
 ```
@@ -130,7 +130,7 @@ Question
    │
    └── IT support question
                 ↓
-[2] Retrieve from Private Pinecone KB
+[2] Retrieve from Private FAISS KB
                 ↓
 [3] Grade Private Evidence
        ┌────────┴────────┐
@@ -138,7 +138,7 @@ Question
      GOOD               WEAK
        │                 │
        ▼                 ▼
-Generate from KB    [4] Tavily Web Search
+Generate from KB    [4] DuckDuckGo Search
                          ↓
                   [5] Grade Web Evidence
                     ┌────┴─────┐
@@ -185,10 +185,10 @@ The system therefore controls **what to do next** based on its current state.
 | Layer | Technology | Purpose |
 |---|---|---|
 | Agent workflow | LangGraph | Stateful routing and conditional decisions |
-| LLM | Groq | Routing, grading, rewriting, answer generation |
-| Embeddings | HuggingFace `all-MiniLM-L6-v2` | Local 384-dimensional embeddings |
-| Vector DB | Pinecone | Private enterprise knowledge base |
-| External search | Tavily | Fallback when company KB is insufficient |
+| LLM | Gemini Flash-Lite (free tier) | Routing, grading, rewriting, answer generation |
+| Embeddings | Gemini `text-embedding-004` (free tier) | Cloud embeddings, no local download |
+| Vector DB | FAISS (local file) | Private enterprise knowledge base, no server/key |
+| External search | DuckDuckGo (free, no key) | Fallback when company KB is insufficient |
 | API | FastAPI | Backend and REST endpoints |
 | Frontend | HTML/CSS/JavaScript | Employee-facing interface |
 | Audit | SQLite | Basic decision-path logging |
@@ -211,7 +211,7 @@ FDE_Agentic_RAG_IT_Copilot/
 │   │
 │   ├── rag/
 │   │   ├── state.py               # LangGraph state + structured decisions
-│   │   ├── vectorstore.py         # Pinecone + embeddings
+│   │   ├── vectorstore.py         # FAISS + Gemini embeddings
 │   │   └── workflow.py            # Complete Agentic RAG graph
 │   │
 │   ├── services/
@@ -277,22 +277,12 @@ pip install -r requirements.txt
 Create a `.env` file in the project root directory with the following variables:
 
 ```env
-# LLM API Keys
-GROQ_API_KEY=your_groq_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
+# 100% FREE - 1 key from https://aistudio.google.com/apikey (no card)
+GOOGLE_API_KEY=your_google_ai_studio_key_here
 
-# External Search
-TAVILY_API_KEY=your_tavily_api_key_here
-
-# Vector Database (Pinecone)
-PINECONE_API_KEY=your_pinecone_api_key_here
-PINECONE_INDEX_NAME=fde-it-support-rag
-PINECONE_NAMESPACE=company-it-kb
-
-# LLM Models
-GROQ_MODEL=openai/gpt-oss-20b
-OPENAI_MODEL=gpt-4o-mini
-EMBEDDING_MODEL=text-embedding-3-small
+# Free models (optional overrides)
+GEMINI_MODEL=gemini-flash-lite-latest
+EMBEDDING_MODEL=models/gemini-embedding-001
 
 # Security
 ADMIN_API_KEY=change-me-in-production
@@ -305,15 +295,9 @@ APP_ENV=development
 
 | Variable | Description | Example | Required |
 |---|---|---|---|
-| `GROQ_API_KEY` | API key for Groq LLM (routing, grading, generation) | `gsk_...` | ✅ Yes |
-| `OPENAI_API_KEY` | API key for OpenAI (embeddings and fallback LLM) | `sk-...` | ✅ Yes |
-| `TAVILY_API_KEY` | API key for Tavily web search | `tvly-...` | ✅ Yes |
-| `PINECONE_API_KEY` | API key for Pinecone vector database | `pckey-...` | ✅ Yes |
-| `PINECONE_INDEX_NAME` | Pinecone index name | `fde-it-support-rag` | ⚠️ Optional (default: `fde-it-support-rag`) |
-| `PINECONE_NAMESPACE` | Pinecone namespace for document isolation | `company-it-kb` | ⚠️ Optional (default: `company-it-kb`) |
-| `GROQ_MODEL` | Groq model identifier | `openai/gpt-oss-20b` | ⚠️ Optional (default: `openai/gpt-oss-20b`) |
-| `OPENAI_MODEL` | OpenAI model identifier | `gpt-4o-mini` | ⚠️ Optional (default: `gpt-4o-mini`) |
-| `EMBEDDING_MODEL` | Embedding model for vectorization | `text-embedding-3-small` | ⚠️ Optional (default: `text-embedding-3-small`) |
+| `GOOGLE_API_KEY` | Free Google AI Studio key for Gemini LLM + embeddings | `AIza...` | ✅ Yes |
+| `GEMINI_MODEL` | Gemini model identifier | `gemini-flash-lite-latest` | ⚠️ Optional (default: `gemini-flash-lite-latest`) |
+| `EMBEDDING_MODEL` | Gemini embedding model | `models/gemini-embedding-001` | ⚠️ Optional (default: `models/gemini-embedding-001`) |
 | `ADMIN_API_KEY` | Secret key for admin endpoints (document ingestion) | `your-secure-key` | ⚠️ Optional (default: `change-me`) |
 | `APP_ENV` | Application environment | `development` or `production` | ⚠️ Optional (default: `development`) |
 
@@ -339,9 +323,9 @@ Load Documents
    ↓
 Chunk Text
    ↓
-HuggingFace Embeddings
+Gemini Embeddings (free API)
    ↓
-Pinecone Vector Database
+FAISS Local Vector Database
 ```
 
 ### Step 5 — Run the application
@@ -422,7 +406,7 @@ Expected path when internal documents do not answer it:
 Router → KB
 Private KB Retrieval
 KB Grade → WEAK
-Tavily Search
+DuckDuckGo Search
 Web Grade → GOOD
 Web Answer
 ```
@@ -490,9 +474,9 @@ Load Text
   ↓
 Recursive Chunking
   ↓
-Embeddings
+Gemini Embeddings (free)
   ↓
-Pinecone Indexing
+FAISS Local Indexing
   ↓
 Immediately Available for Retrieval
 ```
@@ -537,7 +521,7 @@ Response contains:
 
 Protected by the `X-Admin-Key` request header.
 
-Uploads a document and adds its chunks to Pinecone.
+Uploads a document and adds its chunks to local FAISS.
 
 ---
 
