@@ -1,6 +1,8 @@
 # Enterprise IT Support Agentic RAG Copilot
 
-An end-to-end **Forward Deployed Engineer (FDE) project** that turns a notebook-style Agentic RAG workflow into a deployable internal product using **LangGraph, FastAPI, FAISS, Gemini (free tier), DuckDuckGo, HTML, CSS, and JavaScript** — 100% free, no paid API.
+An end-to-end **Forward Deployed Engineer (FDE) project** that turns a notebook-style Agentic RAG workflow into a deployable internal product using **LangGraph, FastAPI, FAISS, Gemini (free tier), DuckDuckGo, HTML, CSS, and JavaScript**.
+
+**100% free. No paid API. No Ollama. No local model download.** One free Google key runs the whole thing; an optional free Groq key acts as automatic fallback.
 
 ---
 
@@ -111,7 +113,7 @@ This repository demonstrates each layer.
                └──────────────┬──────────────┘
                               ▼
                      ┌────────────────┐
-                     │ Gemini LLM       │
+                     │ Gemini LLM     │
                      │ Grounded Answer│
                      └────────────────┘
 ```
@@ -119,8 +121,6 @@ This repository demonstrates each layer.
 ---
 
 ## 4. Agentic RAG Workflow
-
-This follows the same core implementation pattern as the reference notebook.
 
 ```text
 Question
@@ -138,7 +138,7 @@ Question
      GOOD               WEAK
        │                 │
        ▼                 ▼
-Generate from KB    [4] DuckDuckGo Search
+Generate from KB    [4] DuckDuckGo Web Search
                          ↓
                   [5] Grade Web Evidence
                     ┌────┴─────┐
@@ -180,45 +180,47 @@ The system therefore controls **what to do next** based on its current state.
 
 ---
 
-## 5. Main Technology Stack
+## 5. Main Technology Stack (all free)
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| Agent workflow | LangGraph | Stateful routing and conditional decisions |
-| LLM | Gemini Flash-Lite (free tier) | Routing, grading, rewriting, answer generation |
-| Embeddings | Gemini `text-embedding-004` (free tier) | Cloud embeddings, no local download |
-| Vector DB | FAISS (local file) | Private enterprise knowledge base, no server/key |
-| External search | DuckDuckGo (free, no key) | Fallback when company KB is insufficient |
-| API | FastAPI | Backend and REST endpoints |
-| Frontend | HTML/CSS/JavaScript | Employee-facing interface |
-| Audit | SQLite | Basic decision-path logging |
-| Packaging | Docker | Reproducible deployment |
+| Layer | Technology | Purpose | Cost |
+|---|---|---|---|
+| Agent workflow | LangGraph | Stateful routing and conditional decisions | Free |
+| LLM | Gemini Flash-Lite (`gemini-flash-lite-latest`) | Routing, grading, rewriting, answer generation | Free tier, no card |
+| LLM fallback | Groq `openai/gpt-oss-20b` | Automatic failover when Gemini quota is exhausted | Free tier, no card |
+| Embeddings | Gemini `gemini-embedding-001` | Cloud embeddings, no local download | Free tier, no card |
+| Vector DB | FAISS (local file) | Private enterprise knowledge base, no server/key | Free |
+| External search | DuckDuckGo | Fallback when company KB is insufficient | Free, no key |
+| API | FastAPI | Backend and REST endpoints | Free |
+| Frontend | HTML/CSS/JavaScript | Employee-facing interface | Free |
+| Audit | SQLite | Basic decision-path logging | Free |
+| Packaging | Docker | Reproducible deployment | Free |
 
 ---
 
 ## 6. Project Structure
 
 ```text
-FDE_Agentic_RAG_IT_Copilot/
+Enterprise-IT-Support-Agentic-RAG-Copilot/
 │
 ├── app/
 │   ├── api/
 │   │   └── routes.py              # Chat, health and ingestion APIs
 │   │
 │   ├── core/
-│   │   ├── config.py              # Environment configuration
+│   │   ├── config.py              # Environment configuration (free-tier settings)
+│   │   ├── keypool.py             # Multi-key round-robin rotation
 │   │   └── logging.py             # Logging configuration
 │   │
 │   ├── rag/
 │   │   ├── state.py               # LangGraph state + structured decisions
 │   │   ├── vectorstore.py         # FAISS + Gemini embeddings
-│   │   └── workflow.py            # Complete Agentic RAG graph
+│   │   └── workflow.py            # Complete Agentic RAG graph (+ Groq failover)
 │   │
 │   ├── services/
 │   │   ├── audit.py               # SQLite query audit
 │   │   └── ingestion.py           # PDF/TXT/MD/DOCX loading + chunking
 │   │
-│   └── main.py                    # FastAPI application
+│   └── main.py                    # FastAPI application (+ boot auto-ingest)
 │
 ├── data/
 │   └── sample_kb/
@@ -232,89 +234,107 @@ FDE_Agentic_RAG_IT_Copilot/
 ├── templates/
 │   └── index.html
 │
-├── tests/
-│   └── test_ingestion.py
-│
-├── uploads/
-├── .env.example
-├── Dockerfile
-├── ingest_sample_kb.py
+├── render.yaml                    # Render Blueprint (one-click deploy)
+├── Dockerfile                     # Production container
+├── .env.example                   # Free-key env template (copy to .env)
+├── ingest_sample_kb.py            # Load sample docs into FAISS
 ├── requirements.txt
-├── run.py
+├── run.py                         # Local entry point (port 8080)
 └── README.md
 ```
 
 ---
 
-## 7. Setup
+## 7. Setup (fresh PC: clone → run in 10 minutes)
 
-### Step 1 — Create virtual environment
+### Prerequisites
+
+- **Python 3.11+** ([python.org](https://www.python.org/downloads/)) — check with `python --version`
+- **Git**
+- (Optional, only for container runs) **Docker Desktop**
+
+### Step 1 — Clone
 
 ```bash
-python -m venv venv
+git clone https://github.com/fahim3101/Agentic-Rag-System.git
+cd Agentic-Rag-System
 ```
+
+### Step 2 — Virtual environment (recommended)
 
 Windows:
 
 ```bash
+python -m venv venv
 venv\Scripts\activate
 ```
 
 macOS/Linux:
 
 ```bash
+python -m venv venv
 source venv/bin/activate
 ```
 
-### Step 2 — Install dependencies
+### Step 3 — Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 3 — Configure environment
+### Step 4 — Get free API keys (no credit card anywhere)
 
-Create a `.env` file in the project root directory with the following variables:
+1. **Gemini key (required — LLM + embeddings):** go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → Create API key → copy it.
+2. **Groq key (optional but recommended — automatic fallback):** go to [console.groq.com](https://console.groq.com) → API Keys → create one.
+
+### Step 5 — Configure environment
+
+Copy the template and fill in your keys:
+
+```bash
+# Windows
+copy .env.example .env
+# macOS/Linux
+cp .env.example .env
+```
+
+Edit `.env`:
 
 ```env
-# 100% FREE - 1 key from https://aistudio.google.com/apikey (no card)
-GOOGLE_API_KEY=your_google_ai_studio_key_here
+# Required: one or more Gemini keys (comma-separated = auto-rotated)
+GOOGLE_API_KEYS=AIza_paste_your_key_here
 
-# Free models (optional overrides)
-GEMINI_MODEL=gemini-flash-lite-latest
-EMBEDDING_MODEL=models/gemini-embedding-001
-
-# Security
-ADMIN_API_KEY=change-me-in-production
-
-# Application Settings
-APP_ENV=development
+# Optional fallback
+GROQ_API_KEY=gsk_paste_your_key_here
 ```
+
+> `ADMIN_API_KEY` can stay as-is for local use. Never commit `.env` — it is already in `.gitignore`.
 
 #### Environment Variable Reference
 
-| Variable | Description | Example | Required |
-|---|---|---|---|
-| `GOOGLE_API_KEY` | Free Google AI Studio key for Gemini LLM + embeddings | `AIza...` | ✅ Yes |
-| `GEMINI_MODEL` | Gemini model identifier | `gemini-flash-lite-latest` | ⚠️ Optional (default: `gemini-flash-lite-latest`) |
-| `EMBEDDING_MODEL` | Gemini embedding model | `models/gemini-embedding-001` | ⚠️ Optional (default: `models/gemini-embedding-001`) |
-| `ADMIN_API_KEY` | Secret key for admin endpoints (document ingestion) | `your-secure-key` | ⚠️ Optional (default: `change-me`) |
-| `APP_ENV` | Application environment | `development` or `production` | ⚠️ Optional (default: `development`) |
+| Variable | Description | Required |
+|---|---|---|
+| `GOOGLE_API_KEYS` | Free Google AI Studio key(s), comma-separated for rotation | ✅ Yes |
+| `GROQ_API_KEY` | Free Groq key, used only when Gemini quota is exhausted | Optional |
+| `GEMINI_MODEL` | Default: `gemini-flash-lite-latest` | Optional |
+| `EMBEDDING_MODEL` | Default: `models/gemini-embedding-001` | Optional |
+| `GROQ_MODEL` | Default: `openai/gpt-oss-20b` | Optional |
+| `ADMIN_API_KEY` | Secret for the document-upload endpoint | Optional (change in production) |
+| `APP_ENV` | `development` or `production` | Optional |
 
-**⚠️ Important Security Notes:**
-
-- Never commit `.env` to version control. Add it to `.gitignore`.
-- Change `ADMIN_API_KEY` to a secure random value in production.
-- Use environment variables instead of hardcoding secrets.
-- Restrict API key access to only the services that need them.
-
-### Step 4 — Load sample company knowledge
+### Step 6 — Load sample company knowledge
 
 ```bash
 python ingest_sample_kb.py
 ```
 
-This demonstrates the RAG ingestion pipeline:
+Expected output:
+
+```text
+Indexed 2 files -> 5 chunks -> FAISS .../data/faiss_index
+```
+
+Pipeline:
 
 ```text
 Company Documents
@@ -328,7 +348,7 @@ Gemini Embeddings (free API)
 FAISS Local Vector Database
 ```
 
-### Step 5 — Run the application
+### Step 7 — Run the application
 
 ```bash
 python run.py
@@ -337,14 +357,16 @@ python run.py
 Open:
 
 ```text
-http://127.0.0.1:8000
+http://127.0.0.1:8080
 ```
 
 FastAPI API docs:
 
 ```text
-http://127.0.0.1:8000/docs
+http://127.0.0.1:8080/docs
 ```
+
+Stop anytime with `Ctrl+C`.
 
 ---
 
@@ -525,3 +547,35 @@ Uploads a document and adds its chunks to local FAISS.
 
 ---
 
+## 11. Free-Tier Quotas (read this before heavy testing)
+
+- Each full chat costs **3–6 LLM calls**. A greeting costs 1.
+- Gemini free tier is roughly **20 requests/day per model** — one key supports ~3–4 full RAG chats/day.
+- Need more? Add a 2nd/3rd free key: `GOOGLE_API_KEYS=key1,key2,key3` (auto-rotated), and/or set `GROQ_API_KEY` for automatic failover.
+- A `429 RESOURCE_EXHAUSTED` error means that model's daily quota is done — wait a few hours or add keys.
+
+---
+
+## 12. Deploy to Render (live link in ~5 minutes)
+
+The repo ships with `render.yaml` (Blueprint) and a tested `Dockerfile`.
+
+1. Go to **dashboard.render.com → New + → Blueprint**, connect the GitHub repo, Apply.
+2. Fill `GOOGLE_API_KEYS` and `GROQ_API_KEY` in the Environment tab (`ADMIN_API_KEY` auto-generates).
+3. **Deploy Blueprint** → wait 3–6 min → live URL appears.
+4. Notes: free instances sleep after 15 min idle (first request wakes in ~1 min); no persistent disk on free, but the app **auto-rebuilds the FAISS index on boot** if keys are set.
+
+---
+
+## 13. Troubleshooting
+
+| Symptom | Cause / Fix |
+|---|---|
+| `GOOGLE_API_KEY(S) is missing` | `.env` missing or empty — copy `.env.example` to `.env` and add your key |
+| `429 RESOURCE_EXHAUSTED` / quota error | Daily free quota done — wait, or add more keys / `GROQ_API_KEY` |
+| `FAISS index not found` | Run `python ingest_sample_kb.py` first |
+| `Address already in use :8080` | An old server still holds the port — stop other terminals / kill leftover `python run.py` processes |
+| UI shows old errors after a code fix | Hard-refresh the browser (`Ctrl+F5`); HTML/JS/CSS changes need no server restart, `.py`/`.env` changes need a restart |
+| Page text looks like symbols | Browser font setting (e.g. Wingdings) — reset `chrome://settings/fonts` to Arial/Times |
+
+---
