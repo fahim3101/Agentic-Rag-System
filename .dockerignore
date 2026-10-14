@@ -12,3 +12,11 @@ env
 .pytest_cache
 tests
 *.log
+# Regenerated at boot / runtime (Render free has no persistent disk)
+graphify-out/
+data/faiss_index/
+data/audit.db
+uploads/
+# Not needed at runtime
+docs/
+Agentic-RAG-demo/

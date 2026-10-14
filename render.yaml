@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: it-support-agentic-rag
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      # Secrets - fill these in the Render dashboard (never commit keys)
+      - key: GOOGLE_API_KEYS
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ADMIN_API_KEY
+        generateValue: true
+      # Free-tier defaults (override only if needed)
+      - key: GEMINI_MODEL
+        value: gemini-flash-lite-latest
+      - key: EMBEDDING_MODEL
+        value: models/gemini-embedding-001
+      - key: APP_ENV
+        value: production
